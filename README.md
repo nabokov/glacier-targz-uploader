@@ -19,4 +19,5 @@ Prerequisites:
 
 Instructions:
 
+- Edit AWSCredentials.properties.
 - Compile and create executables for each of the classes under src/cmdline. Usages are embedded as comments.

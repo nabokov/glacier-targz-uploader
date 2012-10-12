@@ -12,6 +12,7 @@ import com.amazonaws.AmazonClientException;
 import com.amazonaws.AmazonServiceException;
 import com.amazonaws.services.glacier.AmazonGlacierClient;
 import com.amazonaws.services.glacier.TreeHashGenerator;
+//import com.amazonaws.services.glacier.model.AbortMultipartUploadRequest;
 import com.amazonaws.services.glacier.model.CompleteMultipartUploadRequest;
 import com.amazonaws.services.glacier.model.CompleteMultipartUploadResult;
 import com.amazonaws.services.glacier.model.InitiateMultipartUploadRequest;
@@ -31,8 +32,8 @@ public class StreamUploader {
 
     // This example works for part sizes up to 1 GB.
     //public static String partSize = "1048576"; // 1MB
-	private String partSize = "134217728"; // 128MB
-	private boolean verbose = true;
+    private String partSize = "134217728"; // 128MB
+    private boolean verbose = true;
 
     private String vaultName;
     private String archiveDescription;
@@ -41,6 +42,9 @@ public class StreamUploader {
     private String totalChecksum;
     private String totalLength;
 
+    // setting valid partialUploadStatus objectwill enable resuming
+    private PartialUploadStatus partialUploadStatus = null;
+
     /**
      * @param client
      * @param vaultName
@@ -48,17 +52,21 @@ public class StreamUploader {
      * @param inputStream from which the content to be uploaded is read.
      */
     public StreamUploader(AmazonGlacierClient client, String vaultName, String archiveDescription, InputStream pipedIn) {
-    	this.client = client;
-    	this.vaultName = vaultName;
-    	this.archiveDescription = archiveDescription;
-    	this.pipedIn = pipedIn;
+        this.client = client;
+        this.vaultName = vaultName;
+        this.archiveDescription = archiveDescription;
+        this.pipedIn = pipedIn;
 
-    	this.totalChecksum = null;
-    	this.totalLength = null;
+        this.totalChecksum = null;
+        this.totalLength = null;
     }
 
     public void setVerbose(boolean verbose) { this.verbose = verbose; }
     public void setPartSize(long partSize) { this.partSize = String.valueOf(partSize); }
+
+    public void setPartialUploadStatus(PartialUploadStatus partialUploadStatus) {
+        this.partialUploadStatus = partialUploadStatus;
+    }
 
     /**
      * Start processing input, and upload it in multiple parts.
@@ -66,19 +74,19 @@ public class StreamUploader {
      * @return archiveId on successful upload
      */
     public String startProcessingStream() {
-    	String archiveId = null;
-    	try {
+        String archiveId = null;
+        try {
             if (verbose) System.out.println("Uploading an archive.");
             String uploadId = initiateMultipartUpload();
             uploadParts(uploadId);
             CompleteMultipartUploadResult result = completeMultiPartUpload(uploadId);
             archiveId = result.getArchiveId();
             if (verbose) {
-            	System.out.println("Completed an archive.");
-            	System.out.println("Location:" + result.getLocation());
-            	System.out.println("Archive ID:" + archiveId);
-            	System.out.println("Total size: "+totalLength);
-            	System.out.printf("  (%2.2f GB)\n", (Float.valueOf(totalLength)/(1024*1024*1024)) );
+                System.out.println("Completed an archive.");
+                System.out.println("Location:" + result.getLocation());
+                System.out.println("Archive ID:" + archiveId);
+                System.out.println("Total size: "+totalLength);
+                System.out.printf("  (%2.2f GB)\n", (Float.valueOf(totalLength)/(1024*1024*1024)) );
             }
 
         } catch (Exception e) {
@@ -86,20 +94,31 @@ public class StreamUploader {
             System.exit(1);
         }
 
-    	return archiveId;
+        return archiveId;
     }
-    
+
     private String initiateMultipartUpload() {
-        // Initiate
+        String uploadId = null;
+        if (partialUploadStatus != null) {
+            uploadId = partialUploadStatus.getUploadId(); 
+            if (uploadId != null) {
+                if (verbose) System.out.println("Resuming previous upload:"+uploadId);
+                return uploadId;
+            }
+        }
+
         InitiateMultipartUploadRequest request = new InitiateMultipartUploadRequest()
-            .withVaultName(vaultName)
-            .withArchiveDescription(archiveDescription)
-            .withPartSize(partSize);
-        
+        .withVaultName(vaultName)
+        .withArchiveDescription(archiveDescription)
+        .withPartSize(partSize);
+
         InitiateMultipartUploadResult result = client.initiateMultipartUpload(request);
-        
-        if (verbose) System.out.println("uploadID: " + result.getUploadId());
-        return result.getUploadId();
+        uploadId = result.getUploadId();
+
+        if (verbose) System.out.println("uploadID: " + uploadId);
+        if (partialUploadStatus != null) partialUploadStatus.setUploadId(uploadId);
+
+        return uploadId;
     }
 
     private void uploadParts(String uploadId) throws AmazonServiceException, NoSuchAlgorithmException, AmazonClientException, IOException {
@@ -110,17 +129,17 @@ public class StreamUploader {
         String contentRange;
 
         TOTALLOOP: while (true) {
-        	// try to read exactly [partSize] of the input, unless it is the very last portion
-        	int read = 0;
-        	PARTIALCONTENTLOOP: while (read < buffer.length) {
-        		int subReadCount = pipedIn.read(buffer, read, buffer.length - read);
-        		if (subReadCount == -1) {
-        			if (read == 0) { break TOTALLOOP; } // read only EOF
-        			else { break PARTIALCONTENTLOOP; } // read last portion, less than [partSize]
-        		} else {
-        			read += subReadCount;
-        		}
-        	}
+            // try to read exactly [partSize] of the input, unless it is the very last portion
+            int read = 0;
+            PARTIALCONTENTLOOP: while (read < buffer.length) {
+                int subReadCount = pipedIn.read(buffer, read, buffer.length - read);
+                if (subReadCount == -1) {
+                    if (read == 0) { break TOTALLOOP; } // read only EOF
+                    else { break PARTIALCONTENTLOOP; } // read last portion, less than [partSize]
+                } else {
+                    read += subReadCount;
+                }
+            }
 
             byte[] bytesRead = Arrays.copyOf(buffer, read);
 
@@ -129,19 +148,28 @@ public class StreamUploader {
             byte[] binaryChecksum = BinaryUtils.fromHex(partialChecksum);
             binaryChecksums.add(binaryChecksum);
             if (verbose) System.out.println(contentRange);
-                        
-            //Upload part.
-            UploadMultipartPartRequest partRequest = new UploadMultipartPartRequest()
-            .withVaultName(vaultName)
-            .withBody(new ByteArrayInputStream(bytesRead))
-            .withChecksum(partialChecksum)
-            .withRange(contentRange)
-            .withUploadId(uploadId);
-        
-            UploadMultipartPartResult partResult = client.uploadMultipartPart(partRequest);
-            if (verbose) {
-            	System.out.println("Part uploaded, checksum: " + partResult.getChecksum());
-            	System.out.printf("Sent so far: %2.2f GB\n", ((float)currentPosition/(1024*1024*1024)));
+
+            if (partialUploadStatus != null
+                    && partialUploadStatus.previouslyUploaded(contentRange, partialChecksum)) {
+                if (verbose)
+                    System.out.println("Already uploaded successfully in the previous attempt. Skipping..");
+            } else {
+                //Upload part.
+                UploadMultipartPartRequest partRequest = new UploadMultipartPartRequest()
+                .withVaultName(vaultName)
+                .withBody(new ByteArrayInputStream(bytesRead))
+                .withChecksum(partialChecksum)
+                .withRange(contentRange)
+                .withUploadId(uploadId);
+
+                UploadMultipartPartResult partResult = client.uploadMultipartPart(partRequest);
+                if (verbose) {
+                    System.out.println("Part uploaded, checksum: " + partResult.getChecksum());
+                    System.out.printf("Sent so far: %2.2f GB\n", ((float)currentPosition/(1024*1024*1024)));
+                }
+
+                if (partialUploadStatus != null)
+                    partialUploadStatus.bookmarkSuccessfulUpload(contentRange, partialChecksum);
             }
 
             currentPosition = currentPosition + read;
@@ -152,13 +180,15 @@ public class StreamUploader {
     }
 
     private CompleteMultipartUploadResult completeMultiPartUpload(String uploadId) throws NoSuchAlgorithmException, IOException {
-    	
+
         CompleteMultipartUploadRequest compRequest = new CompleteMultipartUploadRequest()
-            .withVaultName(vaultName)
-            .withUploadId(uploadId)
-            .withChecksum(totalChecksum)
-            .withArchiveSize(totalLength);
-        
+        .withVaultName(vaultName)
+        .withUploadId(uploadId)
+        .withChecksum(totalChecksum)
+        .withArchiveSize(totalLength);
+
+        if (partialUploadStatus != null) partialUploadStatus.deleteFile();
+
         return client.completeMultipartUpload(compRequest);
     }
 }
