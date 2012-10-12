@@ -6,6 +6,9 @@ glacier-targz-uploader
 What is this ?:
 
 - Command line tools to archive/retrieve your data to/from Amazon Glacier vault.
+- Can upload a large directory as tar.gz without creating an intermediate file.
+- Can resume upload after interrupt / transient failure.
+
 - TarGzUploader: Can compress and upload all contents of the specified directory without creating an intermediate tar.gz file.
 - StreamUploader: Can send whatever comes into stdin to the vault.
 - Downloader: Downloads the specified archive.
