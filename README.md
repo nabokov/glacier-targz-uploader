@@ -15,9 +15,9 @@ Prerequisites:
 
 - Works best with AWS Toolkit for Eclipse (http://aws.amazon.com/eclipse/). Otherwise, you will have to download AWS SDK that comes with the toolkit and setup your environment manually.
 
-- You will also need commons-compress-1.4.1.jar (http://commons.apache.org/compress/download_compress.cgi )
+- You will also need commons-compress-1.4.1.jar (http://commons.apache.org/compress/download_compress.cgi ) and commons-cli-1.2.jar (http://commons.apache.org/cli/download_cli.cgi) 
 
 Instructions:
 
 - Edit AWSCredentials.properties.
-- Compile and create executables for each of the classes under src/cmdline. Usages are embedded as comments.
+- Compile and create executable jars for each of the classes under src/cmdline. For usage, run the executable jar without args. Usages in more detail are embedded as comments.
