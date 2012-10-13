@@ -26,5 +26,11 @@ Prerequisites
 Instructions
 ------------
 
-- Edit AWSCredentials.properties.
+- Run the executable jarfiles in builds/ directory.
+    java -Xmx1G -Dfile.encoding=UTF-8 -jar listVaultInventory.jar -vault testvault
+
+Or...
+
 - Compile and create executable jars for each of the classes under src/cmdline. For usage, run the executable jar without args. Usages in more detail are embedded as comments.
+
+Remember to set your own AWS credentials in AWSCredentials.properties file.
