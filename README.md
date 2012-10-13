@@ -16,17 +16,11 @@ Currently, following 4 tools are available:
 - Downloader: Downloads the specified archive.
 - ListInventory: Makes list of inventories in the vault. (Just a copy-paste of the code in the official manual...)
 
-Prerequisites
--------------
-
-- Works best with AWS Toolkit for Eclipse (http://aws.amazon.com/eclipse/). Otherwise, you will have to download AWS SDK that comes with the toolkit and setup your environment manually.
-
-- You will also need commons-compress-1.4.1.jar (http://commons.apache.org/compress/download_compress.cgi ) and commons-cli-1.2.jar (http://commons.apache.org/cli/download_cli.cgi) 
-
 Instructions
 ------------
 
 - Run the executable jarfiles in builds/ directory.
+
     java -Xmx1G -Dfile.encoding=UTF-8 -jar listVaultInventory.jar -vault testvault
 
 Or...
@@ -34,3 +28,11 @@ Or...
 - Compile and create executable jars for each of the classes under src/cmdline. For usage, run the executable jar without args. Usages in more detail are embedded as comments.
 
 Remember to set your own AWS credentials in AWSCredentials.properties file.
+
+Prerequisites (to compile the code)
+-------------
+
+- Works best with AWS Toolkit for Eclipse (http://aws.amazon.com/eclipse/). Otherwise, you will have to download AWS SDK that comes with the toolkit and setup your library paths accordingly.
+
+- You will also need commons-compress-1.4.1.jar (http://commons.apache.org/compress/download_compress.cgi ) and commons-cli-1.2.jar (http://commons.apache.org/cli/download_cli.cgi) 
+
