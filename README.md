@@ -19,9 +19,13 @@ Currently, following 4 tools are available:
 Instructions
 ------------
 
+- Create your glacier vault in aws management console, set your credentials in AWSCredentials.properties, and then:
+
+Either
+
 - Run the executable jarfiles in builds/ directory.
 
-    java -Xmx1G -Dfile.encoding=UTF-8 -jar listVaultInventory.jar -vault testvault
+    java -Xmx1G -Dfile.encoding=UTF-8 -jar listVaultInventory.jar -vault your_vault_name
 
 Or...
 
