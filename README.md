@@ -1,7 +1,7 @@
 glacier-targz-uploader
 ======================
 
-(still in work)
+(日本語の解説はこのブログ記事をどうぞ: http://blog.livedoor.jp/nabokov7/archives/1517648.html )
 
 What is this ?
 --------------
@@ -23,14 +23,15 @@ Instructions
 
 Either
 
-- Run the executable jarfiles in builds/ directory.
+- Run the executable jar files in builds/ directory.
 
-    java -Xmx1G -Dfile.encoding=UTF-8 -jar listVaultInventory.jar -vault your_vault_name
+  (ex.)  java -Xmx1G -Dfile.encoding=UTF-8 -jar listVaultInventory.jar -vault [vault_name]
 
 Or...
 
-- Compile and create executable jars for each of the classes under src/cmdline. For usage, run the executable jar without args. Usages in more detail are embedded as comments.
+- Compile and create executable jars for each of the classes under src/cmdline.
 
+For usage, run the executable jar without args. Usages in more detail are embedded as comments.
 Remember to set your own AWS credentials in AWSCredentials.properties file.
 
 Prerequisites (to compile the code)
