@@ -10,11 +10,12 @@ Set of command line tools to archive/retrieve your data to/from Amazon Glacier v
 - Can upload a large directory as tar.gz without creating an intermediate file.
 - Can resume upload after interrupt / transient failure.
 
-Currently, following 4 tools are available:
+Currently, following 5 tools are available:
 - TarGzUploader: Can compress and upload all contents of the specified directory without creating an intermediate tar.gz file.
 - StreamUploader: Can send whatever comes into stdin to the vault.
 - Downloader: Downloads the specified archive.
-- ListInventory: Makes list of inventories in the vault. (Just a copy-paste of the code in the official manual...)
+- ListInventory: Outputs a list of inventories in the vault. (This is mostly a copy-paste of the code in the official manual. It just outputs the response JSON as is.)
+- EmptyInventory: As you cannot delete a vault unless it is empty, this command helps you by deleting everything in the specified vault.
 
 Instructions
 ------------
@@ -25,7 +26,9 @@ Either
 
 - Run the executable jar files in builds/ directory.
 
-  (ex.)  java -Xmx1G -Dfile.encoding=UTF-8 -jar listVaultInventory.jar -vault [vault_name]
+  e.g.  java -Xmx1G -Dfile.encoding=UTF-8 -jar listVaultInventory.jar -vault [vault_name]
+
+  (-Dfile.encofing=UTF-8 is sometimes necessary to handle non-ascii file names correctly)
 
 Or...
 
