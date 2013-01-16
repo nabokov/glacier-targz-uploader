@@ -74,7 +74,7 @@ public class EmptyVault {
         // check mandatory options
         if (vaultName == null) {
             HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp("java -Dfile.encoding=UTF-8 -Xmx1G -jar listVaultInventory.jar", options, true);
+            formatter.printHelp("java -Dfile.encoding=UTF-8 -Xmx1G -jar emptyVault.jar", options, true);
             System.exit(0);
         }
 
