@@ -72,7 +72,7 @@ public class VaultInventory {
         snsClient = new AmazonSNSClient(credentials);
         snsClient.setEndpoint("https://sns." + region + ".amazonaws.com");
 
-        String uniqid = vaultName.substring(0, 10) + Integer.toString((int)Math.floor(Math.random()*10000));
+        String uniqid = vaultName.substring(0, Math.min(vaultName.length(), 10)) + Integer.toString((int)Math.floor(Math.random()*10000));
         snsTopicName = "TOPIC_" + uniqid;
         sqsQueueName = "QUEUE_" + uniqid;
     }
